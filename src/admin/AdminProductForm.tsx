@@ -90,6 +90,7 @@ export function AdminProductForm() {
       slug,
       rating,
       reviewsCount,
+      inStock: form.inStock === true,
       features: features.length ? features : ['Для домашних тренировок'],
       image: normalizedGallery[0],
       images: normalizedGallery,

@@ -13,6 +13,7 @@ import express from 'express'
 import multer from 'multer'
 import { createAnalyticsStore } from './analytics.js'
 import { createErrorLog } from './errors.js'
+import { createGalleryStore } from './gallery.js'
 import { createOrdersStore } from './orders.js'
 import { createSettingsStore } from './settings.js'
 
@@ -50,9 +51,11 @@ const UPLOADS_DIR = join(DATA_DIR, 'uploads')
 const STORE_PATH = join(DATA_DIR, 'store.json')
 const ANALYTICS_PATH = join(DATA_DIR, 'analytics.json')
 const ORDERS_PATH = join(DATA_DIR, 'orders.json')
+const GALLERY_PATH = join(DATA_DIR, 'gallery.json')
 const SETTINGS_PATH = join(DATA_DIR, 'settings.json')
 const ERRORS_PATH = join(DATA_DIR, 'errors.json')
 const DEFAULT_SETTINGS_PATH = join(ROOT, 'server', 'data', 'settings.defaults.json')
+const DEFAULT_GALLERY_PATH = join(ROOT, 'server', 'data', 'gallery.json')
 const DEFAULTS_PATH = join(ROOT, 'server', 'data', 'store.json')
 const BUNDLED_UPLOADS_DIR = join(ROOT, 'server', 'data', 'uploads')
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'sportking'
@@ -84,6 +87,10 @@ function seedDataFromProject() {
     writeFileSync(SETTINGS_PATH, readFileSync(DEFAULT_SETTINGS_PATH, 'utf8'))
   }
 
+  if (!existsSync(GALLERY_PATH) && existsSync(DEFAULT_GALLERY_PATH)) {
+    writeFileSync(GALLERY_PATH, readFileSync(DEFAULT_GALLERY_PATH, 'utf8'))
+  }
+
   if (!existsSync(BUNDLED_UPLOADS_DIR)) return
 
   for (const file of readdirSync(BUNDLED_UPLOADS_DIR)) {
@@ -98,6 +105,7 @@ function seedDataFromProject() {
 const sessions = new Map()
 const analytics = createAnalyticsStore(ANALYTICS_PATH)
 const orders = createOrdersStore(ORDERS_PATH)
+const gallery = createGalleryStore(GALLERY_PATH)
 const siteSettings = createSettingsStore(SETTINGS_PATH, DEFAULT_SETTINGS_PATH)
 const errorLog = createErrorLog(ERRORS_PATH)
 const rateBuckets = new Map()
@@ -177,7 +185,7 @@ function readStore() {
       )
     }
   }
-  return ensureReviews(JSON.parse(readFileSync(STORE_PATH, 'utf8')))
+  return normalizeStoreForResponse(ensureReviews(JSON.parse(readFileSync(STORE_PATH, 'utf8'))))
 }
 
 function writeStore(store) {
@@ -186,6 +194,26 @@ function writeStore(store) {
 
 function ensureReviews(store) {
   if (!Array.isArray(store.reviews)) store.reviews = []
+  return store
+}
+
+function normalizeInStock(value) {
+  return value !== false && value !== 'false' && value !== 0
+}
+
+function normalizeProductInput(data) {
+  const next = { ...data }
+  if ('inStock' in next) {
+    next.inStock = next.inStock === true || next.inStock === 'true'
+  }
+  return next
+}
+
+function normalizeStoreForResponse(store) {
+  store.products = store.products.map((product) => ({
+    ...product,
+    inStock: normalizeInStock(product.inStock),
+  }))
   return store
 }
 
@@ -268,6 +296,49 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/store', (_req, res) => {
   res.json(readStore())
+})
+
+app.get('/api/gallery', (_req, res) => {
+  try {
+    res.json({ photos: gallery.list({ publishedOnly: true }) })
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Ошибка загрузки галереи' })
+  }
+})
+
+app.get('/api/gallery/all', authMiddleware, (_req, res) => {
+  try {
+    res.json({ photos: gallery.list({ publishedOnly: false }) })
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Ошибка загрузки галереи' })
+  }
+})
+
+app.post('/api/gallery', authMiddleware, (req, res) => {
+  try {
+    const photo = gallery.create(req.body || {})
+    res.status(201).json(photo)
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Не удалось добавить фото' })
+  }
+})
+
+app.put('/api/gallery/:id', authMiddleware, (req, res) => {
+  try {
+    res.json(gallery.update(req.params.id, req.body || {}))
+  } catch (err) {
+    const status = err.message === 'Фото не найдено' ? 404 : 400
+    res.status(status).json({ error: err.message || 'Не удалось обновить фото' })
+  }
+})
+
+app.delete('/api/gallery/:id', authMiddleware, (req, res) => {
+  try {
+    res.json(gallery.remove(req.params.id))
+  } catch (err) {
+    const status = err.message === 'Фото не найдено' ? 404 : 400
+    res.status(status).json({ error: err.message || 'Не удалось удалить фото' })
+  }
 })
 
 app.get('/api/settings', (_req, res) => {
@@ -426,12 +497,12 @@ app.post('/api/upload', authMiddleware, (req, res, _next) => {
 
 app.post('/api/products', authMiddleware, (req, res) => {
   const store = readStore()
-  const data = req.body
+  const data = normalizeProductInput(req.body || {})
   const id = data.id || data.slug || slugify(data.name)
   if (store.products.some((p) => p.id === id)) {
     return res.status(409).json({ error: 'Товар с таким ID уже существует' })
   }
-  const product = { ...data, id }
+  const product = { ...data, id, inStock: normalizeInStock(data.inStock) }
   if (typeof product.rating === 'number') {
     product.rating = Math.min(5, Math.max(0, product.rating))
   }
@@ -444,7 +515,7 @@ app.put('/api/products/:id', authMiddleware, (req, res) => {
   const store = readStore()
   const index = store.products.findIndex((p) => p.id === req.params.id)
   if (index === -1) return res.status(404).json({ error: 'Not found' })
-  const patch = { ...req.body }
+  const patch = normalizeProductInput(req.body || {})
   delete patch.id
   if (typeof patch.rating === 'number') {
     patch.rating = Math.min(5, Math.max(0, patch.rating))
@@ -452,9 +523,12 @@ app.put('/api/products/:id', authMiddleware, (req, res) => {
   if (typeof patch.reviewsCount === 'number') {
     patch.reviewsCount = Math.max(0, Math.round(patch.reviewsCount))
   }
+  if ('inStock' in patch) {
+    patch.inStock = patch.inStock === true
+  }
   store.products[index] = { ...store.products[index], ...patch }
   writeStore(store)
-  res.json(store.products[index])
+  res.json({ ...store.products[index], inStock: normalizeInStock(store.products[index].inStock) })
 })
 
 app.delete('/api/products/:id', authMiddleware, (req, res) => {

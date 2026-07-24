@@ -28,7 +28,7 @@ import { defaultProducts } from '../data/products'
 
 import { defaultCategories } from '../data/categories'
 
-import { defaultSiteSettings, mergeSiteSettings } from '../types/siteSettings'
+import { defaultSiteSettings, mergeSiteSettings, readCachedSiteSettings, writeCachedSiteSettings } from '../types/siteSettings'
 
 import { api, setAuthToken, type StoreData } from '../api/client'
 
@@ -47,6 +47,8 @@ interface DataContextValue {
   reviews: Review[]
 
   siteSettings: SiteSettings
+
+  settingsHydrated: boolean
 
   loading: boolean
 
@@ -134,13 +136,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const [store, setStore] = useState<StoreData | null>(null)
 
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings)
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
+    return readCachedSiteSettings() ?? defaultSiteSettings
+  })
+
+  const [settingsHydrated, setSettingsHydrated] = useState(
+    () => !!readCachedSiteSettings(),
+  )
 
   const [loading, setLoading] = useState(true)
 
   const [error, setError] = useState<string | null>(null)
 
-  const [isAdmin, setIsAdmin] = useState(() => !!sessionStorage.getItem(AUTH_KEY))
+  const [isAdmin, setIsAdmin] = useState(() => {
+    try {
+      return !!sessionStorage.getItem(AUTH_KEY)
+    } catch {
+      return false
+    }
+  })
 
 
 
@@ -151,9 +165,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const refreshSettings = useCallback(async () => {
     try {
       const settings = await api.getSettings()
-      setSiteSettings(mergeSiteSettings(settings))
+      const merged = mergeSiteSettings(settings)
+      setSiteSettings(merged)
+      writeCachedSiteSettings(merged)
+      setSettingsHydrated(true)
       return true
     } catch {
+      setSettingsHydrated(true)
       return false
     }
   }, [])
@@ -163,6 +181,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const maxAttempts = 4
 
     let lastError: Error | null = null
+
+    const settingsTask = refreshSettings()
 
 
 
@@ -174,7 +194,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         setStore({ ...data, reviews: data.reviews ?? [] })
 
-        await refreshSettings()
+        await settingsTask
 
         setError(null)
 
@@ -196,6 +216,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 
 
+    await settingsTask
+
     setError(lastError?.message ?? 'Не удалось загрузить данные')
 
     setStore((prev) => prev ?? fallbackStore)
@@ -206,7 +228,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
 
-    const token = sessionStorage.getItem(AUTH_KEY)
+    let token: string | null = null
+    try {
+      token = sessionStorage.getItem(AUTH_KEY)
+    } catch {
+      token = null
+    }
 
 
 
@@ -224,7 +251,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         } catch {
 
-          sessionStorage.removeItem(AUTH_KEY)
+          try {
+            sessionStorage.removeItem(AUTH_KEY)
+          } catch {
+            /* private mode */
+          }
 
           setAuthToken(null)
 
@@ -662,7 +693,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const updated = await api.updateSettings(data)
 
-    setSiteSettings(mergeSiteSettings(updated))
+    const merged = mergeSiteSettings(updated)
+
+    setSiteSettings(merged)
+
+    writeCachedSiteSettings(merged)
+
+    setSettingsHydrated(true)
 
   }, [])
 
@@ -672,9 +709,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const updated = await api.resetSettings()
 
-    setSiteSettings(mergeSiteSettings(updated))
+    const merged = mergeSiteSettings(updated)
 
-    return mergeSiteSettings(updated)
+    setSiteSettings(merged)
+
+    writeCachedSiteSettings(merged)
+
+    setSettingsHydrated(true)
+
+    return merged
 
   }, [])
 
@@ -684,7 +727,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const { token } = await api.login(password)
 
-    sessionStorage.setItem(AUTH_KEY, token)
+    try {
+      sessionStorage.setItem(AUTH_KEY, token)
+    } catch {
+      /* private mode */
+    }
 
     setAuthToken(token)
 
@@ -706,7 +753,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     }
 
-    sessionStorage.removeItem(AUTH_KEY)
+    try {
+      sessionStorage.removeItem(AUTH_KEY)
+    } catch {
+      /* private mode */
+    }
 
     setAuthToken(null)
 
@@ -727,6 +778,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       reviews: resolvedStore.reviews,
 
       siteSettings,
+
+      settingsHydrated,
 
       loading,
 
@@ -781,6 +834,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       resolvedStore,
 
       siteSettings,
+
+      settingsHydrated,
 
       loading,
 

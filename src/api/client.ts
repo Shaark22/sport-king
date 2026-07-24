@@ -1,12 +1,20 @@
 const AUTH_KEY = 'sportking-admin-token'
 
 function getToken() {
-  return sessionStorage.getItem(AUTH_KEY)
+  try {
+    return sessionStorage.getItem(AUTH_KEY)
+  } catch {
+    return null
+  }
 }
 
 export function setAuthToken(token: string | null) {
-  if (token) sessionStorage.setItem(AUTH_KEY, token)
-  else sessionStorage.removeItem(AUTH_KEY)
+  try {
+    if (token) sessionStorage.setItem(AUTH_KEY, token)
+    else sessionStorage.removeItem(AUTH_KEY)
+  } catch {
+    /* private mode / storage disabled */
+  }
 }
 
 async function request<T>(
@@ -174,12 +182,68 @@ export const api = {
     request<import('../types/siteSettings').SiteSettings>('/api/settings/reset', {
       method: 'POST',
     }),
+
+  getGallery: () =>
+    request<{ photos: import('../types/galleryPhoto').GalleryPhoto[] }>('/api/gallery'),
+
+  getGalleryAll: () =>
+    request<{ photos: import('../types/galleryPhoto').GalleryPhoto[] }>('/api/gallery/all'),
+
+  createGalleryPhoto: (payload: {
+    url: string
+    caption?: string
+    alt?: string
+    published?: boolean
+  }) =>
+    request<import('../types/galleryPhoto').GalleryPhoto>('/api/gallery', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateGalleryPhoto: (
+    id: string,
+    patch: Partial<
+      Pick<
+        import('../types/galleryPhoto').GalleryPhoto,
+        'url' | 'caption' | 'alt' | 'published' | 'sortOrder'
+      >
+    >,
+  ) =>
+    request<import('../types/galleryPhoto').GalleryPhoto>(`/api/gallery/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  deleteGalleryPhoto: (id: string) =>
+    request<{ ok: boolean }>(`/api/gallery/${id}`, { method: 'DELETE' }),
 }
 
 export async function uploadImageFile(file: File): Promise<string> {
   const compressed = await compressIfNeeded(file)
   const { url } = await api.uploadImage(compressed)
   return url
+}
+
+/** Gallery uploads: always compress to keep storage and bandwidth light. */
+export async function uploadGalleryImageFile(file: File): Promise<string> {
+  const compressed = await compressGalleryIfNeeded(file)
+  const { url } = await api.uploadImage(compressed)
+  return url
+}
+
+async function compressGalleryIfNeeded(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+  try {
+    const { compressGalleryImageToDataUrl } = await import('../utils/compressImage')
+    const dataUrl = await compressGalleryImageToDataUrl(file)
+    const blob = await (await fetch(dataUrl)).blob()
+    return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {
+      type: 'image/jpeg',
+    })
+  } catch {
+    if (file.size < 400_000) return file
+    return compressIfNeeded(file)
+  }
 }
 
 async function compressIfNeeded(file: File): Promise<File> {

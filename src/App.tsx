@@ -9,6 +9,7 @@ import { CategoryPage } from './pages/CategoryPage'
 import { About } from './pages/About'
 import { Delivery } from './pages/Delivery'
 import { Contacts } from './pages/Contacts'
+import { GalleryPage } from './pages/GalleryPage'
 import { OrderPage } from './pages/OrderPage'
 import { AnalyticsTracker } from './components/AnalyticsTracker'
 import { ScrollToTop } from './components/ScrollToTop'
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/delivery" element={<Delivery />} />
           <Route path="/contacts" element={<Contacts />} />
+          <Route path="/gallery" element={<GalleryPage />} />
         </Routes>
       </PublicLayout>
     </>

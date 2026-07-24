@@ -10,6 +10,7 @@ import { AdminCategoryForm } from './AdminCategoryForm'
 import { AdminReviews } from './AdminReviews'
 import { AdminOrders } from './AdminOrders'
 import { AdminSettings } from './AdminSettings'
+import { AdminGallery } from './AdminGallery'
 import { AdminErrors } from './AdminErrors'
 
 export function AdminApp() {
@@ -27,6 +28,7 @@ export function AdminApp() {
         <Route path="categories/new" element={<AdminCategoryForm />} />
         <Route path="categories/:id/edit" element={<AdminCategoryForm />} />
         <Route path="reviews" element={<AdminReviews />} />
+        <Route path="gallery" element={<AdminGallery />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="errors" element={<AdminErrors />} />
       </Route>

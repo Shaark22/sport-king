@@ -132,6 +132,27 @@ export function cloneSiteSettings(settings: SiteSettings): SiteSettings {
   }
 }
 
+const SETTINGS_CACHE_KEY = 'sportking-site-settings-v2'
+
+export function readCachedSiteSettings(): SiteSettings | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(SETTINGS_CACHE_KEY)
+    if (!raw) return null
+    return mergeSiteSettings(JSON.parse(raw) as Partial<SiteSettings>)
+  } catch {
+    return null
+  }
+}
+
+export function writeCachedSiteSettings(settings: SiteSettings): void {
+  try {
+    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings))
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 /** Совместимость со старым settings.json (v1 без contacts/about/delivery). */
 export function mergeSiteSettings(
   partial: Partial<SiteSettings> | SiteSettings | null | undefined,

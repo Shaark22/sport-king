@@ -8,6 +8,7 @@ import { Badge } from './Badge'
 import { Rating } from './Rating'
 import { Button, ButtonLink } from './Button'
 import { SmartImage } from './SmartImage'
+import { isProductInStock } from '../../utils/productStock'
 
 interface ProductCardProps {
   product: Product
@@ -44,7 +45,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        {product.inStock && (
+        {isProductInStock(product.inStock) && (
           <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-surface/95 px-2 py-1 text-[10px] font-semibold text-success shadow-sm backdrop-blur-sm sm:bottom-4 sm:right-4 sm:px-2.5 sm:text-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden />
             В наличии

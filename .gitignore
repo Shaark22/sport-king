@@ -19,12 +19,6 @@ ngrok.log
 # Runtime server logs
 server/data/errors.json
 
-# Scrape / debug artifacts
-scripts/debug-*.mjs
-scripts/scrape-log.txt
-scripts/kaspi-*.json
-scripts/scraped-store-backup.json
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

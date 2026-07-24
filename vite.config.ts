@@ -30,6 +30,7 @@ function adminDevRouting(): Plugin {
 export default defineConfig({
   plugins: [react(), tailwindcss(), adminDevRouting()],
   server: {
+    host: true,
     allowedHosts: [
       'trustee-overact-dimness.ngrok-free.dev',
       '.ngrok-free.dev',

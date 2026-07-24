@@ -5,6 +5,7 @@ import { usePageMeta, openKaspi } from '../hooks/usePageMeta'
 import { useData } from '../context/DataContext'
 import { trackProductView } from '../utils/analytics'
 import { formatPrice } from '../utils/formatPrice'
+import { isProductInStock } from '../utils/productStock'
 import { parseVideoUrl } from '../utils/videoUrl'
 import { Badge } from '../components/ui/Badge'
 import { Rating } from '../components/ui/Rating'
@@ -55,6 +56,7 @@ export function ProductPage() {
 
   const images = product.images?.length ? product.images : [product.image]
   const hasVideo = Boolean(product.videoUrl?.trim() && parseVideoUrl(product.videoUrl))
+  const inStock = isProductInStock(product.inStock)
 
   return (
     <div className="bg-background py-10 md:py-16">
@@ -118,12 +120,12 @@ export function ProductPage() {
 
             <p
               className={`mt-3 inline-flex rounded-lg px-3 py-1.5 text-sm font-semibold sm:mt-4 ${
-                product.inStock
+                inStock
                   ? 'bg-success/10 text-success'
                   : 'bg-border text-text-secondary'
               }`}
             >
-              {product.inStock ? 'В наличии' : 'Нет в наличии'}
+              {inStock ? 'В наличии' : 'Нет в наличии'}
             </p>
 
             <p className="mt-4 break-words text-sm leading-relaxed text-text-secondary sm:mt-6 sm:text-base md:text-lg">

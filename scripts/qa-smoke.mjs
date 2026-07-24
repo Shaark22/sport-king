@@ -70,5 +70,15 @@ const kaspiText = await page.evaluate(() =>
 )
 console.log('Product page Kaspi button:', kaspiText)
 
+await page.goto('http://localhost:5173/gallery', { waitUntil: 'networkidle2' })
+await page.waitForFunction(
+  () => document.body.innerText.toUpperCase().includes('ФОТОГАЛЕРЕЯ'),
+  { timeout: 10000 },
+)
+const galleryTitle = await page.evaluate(() =>
+  document.body.innerText.toUpperCase().includes('ФОТОГАЛЕРЕЯ'),
+)
+console.log('Gallery page title:', galleryTitle)
+
 console.log('Console errors:', errors.length ? errors.join(' | ') : 'none')
 await browser.close()

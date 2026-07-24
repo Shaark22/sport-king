@@ -3,7 +3,7 @@ import { SmartImage } from '../ui/SmartImage'
 import { useData } from '../../context/DataContext'
 
 export function Hero() {
-  const { siteSettings } = useData()
+  const { siteSettings, settingsHydrated } = useData()
   const { hero } = siteSettings
 
   return (
@@ -31,12 +31,19 @@ export function Hero() {
 
         <div className="hero-media animate-fade-in order-2">
           <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm sm:rounded-3xl">
-            <SmartImage
-              src={hero.image}
-              alt={hero.imageAlt}
-              className="aspect-[5/4] w-full object-cover object-center sm:aspect-square"
-              loading="eager"
-            />
+            {settingsHydrated ? (
+              <SmartImage
+                src={hero.image}
+                alt={hero.imageAlt}
+                className="aspect-[5/4] w-full object-cover object-center sm:aspect-square"
+                loading="eager"
+              />
+            ) : (
+              <div
+                className="aspect-[5/4] w-full shimmer bg-image-bg sm:aspect-square"
+                aria-hidden
+              />
+            )}
           </div>
         </div>
       </div>

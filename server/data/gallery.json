@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "photos": [
+    {
+      "id": "gal-1784905782545-8hf9jp",
+      "url": "/uploads/1784905782536-87c41bab6395.jpg",
+      "alt": "уцйуйцвыфвф вфывфыв",
+      "caption": "уцйуйцвыфвф вфывфыв",
+      "published": false,
+      "sortOrder": 5,
+      "createdAt": "2026-07-24T15:09:42.545Z"
+    },
+    {
+      "id": "gal-1784905771353-n42ktw",
+      "url": "/uploads/1784905771343-4c36b38e61f3.jpg",
+      "alt": "РВыиивиы в  всичисяясвыфвф",
+      "caption": "РВыиивиы в  всичисяясвыфвф",
+      "published": true,
+      "sortOrder": 4,
+      "createdAt": "2026-07-24T15:09:31.353Z"
+    },
+    {
+      "id": "gal-1784905745030-3ehqjl",
+      "url": "/uploads/1784905745021-b550919467a1.jpg",
+      "alt": "Пример тестоввый",
+      "caption": "Пример тестоввый",
+      "published": true,
+      "sortOrder": 3,
+      "createdAt": "2026-07-24T15:09:05.030Z"
+    },
+    {
+      "id": "gal-1784905729399-f32uo2",
+      "url": "/uploads/1784905729389-599c7a4a199c.jpg",
+      "alt": "пример тест",
+      "caption": "пример тест",
+      "published": true,
+      "sortOrder": 2,
+      "createdAt": "2026-07-24T15:08:49.399Z"
+    },
+    {
+      "id": "gal-1784905710731-0l3hfd",
+      "url": "/uploads/1784905710723-40037f68ebbc.jpg",
+      "alt": "Тест сервер",
+      "caption": "Тест сервер",
+      "published": false,
+      "sortOrder": 1,
+      "createdAt": "2026-07-24T15:08:30.731Z"
+    },
+    {
+      "id": "gal-1784905694646-9nzyr2",
+      "url": "/uploads/1784905694623-b9876dec09a9.jpg",
+      "alt": "Пример фото в астане",
+      "caption": "Пример фото в астане",
+      "published": true,
+      "sortOrder": 0,
+      "createdAt": "2026-07-24T15:08:14.646Z"
+    }
+  ]
+}

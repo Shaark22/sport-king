@@ -15,6 +15,7 @@ const navLinks = [
   { to: '/catalog', label: 'Каталог' },
   { to: '/about', label: 'О нас' },
   { to: '/delivery', label: 'Доставка и оплата' },
+  { to: '/gallery', label: 'Фотогалерея' },
   { to: '/contacts', label: 'Контакты' },
 ]
 
@@ -43,23 +44,26 @@ export function Header() {
             : 'bg-background'
         }`}
       >
-        <div className="site-container flex min-w-0 items-center justify-between gap-2 py-3 sm:gap-3 sm:py-4">
+        <div className="site-container flex min-w-0 items-center gap-2 py-3 sm:gap-3 sm:py-4 lg:grid lg:grid-cols-[minmax(0,auto)_minmax(0,1fr)_auto] lg:items-center lg:gap-4 xl:gap-6">
           <Link
             to="/"
-            className="flex min-w-0 max-w-[58%] shrink items-center sm:max-w-none"
+            className="flex min-w-0 shrink-0 items-center lg:max-w-none"
             aria-label="SPORT KING — на главную"
           >
             <Logo size="nav" />
           </Link>
 
-          <nav className="hidden items-center gap-8 lg:flex" aria-label="Основная навигация">
+          <nav
+            className="hidden min-w-0 items-center justify-center gap-3 xl:gap-5 lg:flex"
+            aria-label="Основная навигация"
+          >
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  `text-sm font-semibold uppercase tracking-wide transition-colors ${
+                  `whitespace-nowrap text-[11px] font-semibold uppercase leading-none tracking-wide transition-colors xl:text-sm ${
                     isActive
                       ? 'text-dark underline decoration-primary decoration-2 underline-offset-4'
                       : 'text-text-secondary hover:text-dark'
@@ -71,7 +75,7 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="ml-auto hidden shrink-0 items-center gap-2 xl:gap-3 lg:flex">
             <a
               href={whatsappUrl}
               target="_blank"
@@ -114,7 +118,7 @@ export function Header() {
 
           <button
             type="button"
-            className="flex h-12 w-12 items-center justify-center rounded-xl border border-border lg:hidden"
+            className="ml-auto flex h-12 w-12 items-center justify-center rounded-xl border border-border lg:hidden"
             onClick={() => setMenuOpen(true)}
             aria-label="Открыть меню"
           >

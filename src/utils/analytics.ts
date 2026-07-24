@@ -11,6 +11,7 @@ export type ContactType =
 
 const VISITOR_KEY = 'sportking-visitor-id'
 const SESSION_TRACKED_KEY = 'sportking-analytics-tracked'
+let memoryVisitorId: string | null = null
 
 type TrackPayload =
   | { type: 'page_view'; path: string; visitorId: string }
@@ -24,12 +25,17 @@ type TrackPayload =
     }
 
 export function getVisitorId(): string {
-  let id = localStorage.getItem(VISITOR_KEY)
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem(VISITOR_KEY, id)
+  try {
+    let id = localStorage.getItem(VISITOR_KEY)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(VISITOR_KEY, id)
+    }
+    return id
+  } catch {
+    if (!memoryVisitorId) memoryVisitorId = crypto.randomUUID()
+    return memoryVisitorId
   }
-  return id
 }
 
 function getSessionTracked(): Set<string> {
@@ -42,11 +48,15 @@ function getSessionTracked(): Set<string> {
 }
 
 function markSessionOnce(key: string): boolean {
-  const tracked = getSessionTracked()
-  if (tracked.has(key)) return false
-  tracked.add(key)
-  sessionStorage.setItem(SESSION_TRACKED_KEY, JSON.stringify([...tracked]))
-  return true
+  try {
+    const tracked = getSessionTracked()
+    if (tracked.has(key)) return false
+    tracked.add(key)
+    sessionStorage.setItem(SESSION_TRACKED_KEY, JSON.stringify([...tracked]))
+    return true
+  } catch {
+    return true
+  }
 }
 
 function send(payload: TrackPayload) {
